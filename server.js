@@ -120,8 +120,31 @@ const startedAt = Date.now();
 
 // --- Yardimcilar ------------------------------------------------------------
 
+/**
+ * ISO 8601 zaman damgasi, ancak saat dilimi OFFSET'i acikca yazilir.
+ *
+ * Neden: barindirma panelleri olaylari kendi yerel saatinizle gosterirken
+ * (orn. GMT+3) uygulama loglari UTC yaziyorsa, ayni an iki farkli sayi
+ * olarak gorunur ve olaylari eslestirmek zorlasir. Bu bicim TZ ortam
+ * degiskenine uyar: TZ=Europe/Istanbul ile loglar panelle ayni saati,
+ * TZ tanimsizken (Render varsayilani) UTC'yi gosterir - her iki durumda da
+ * hangi dilimde oldugu damganin sonunda yazar.
+ */
+function timestamp() {
+    const d = new Date();
+    const pad = (n, w = 2) => String(n).padStart(w, '0');
+    const offsetMin = -d.getTimezoneOffset();
+    const abs = Math.abs(offsetMin);
+    const zone = offsetMin === 0
+        ? 'Z'
+        : `${offsetMin > 0 ? '+' : '-'}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+        `T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}` +
+        `.${pad(d.getMilliseconds(), 3)}${zone}`;
+}
+
 function log(level, msg) {
-    console.log(`[${new Date().toISOString()}] [${level}] ${msg}`);
+    console.log(`[${timestamp()}] [${level}] ${msg}`);
 }
 const info = (m) => log('info', m);
 const warn = (m) => log('warn', m);
@@ -686,8 +709,21 @@ server.on('error', (err) => {
     process.exit(1);
 });
 
+/**
+ * Hangi kodun calistigini logdan tek bakista anlamak icin. Render bu
+ * degiskenleri kendisi saglar; yerelde tanimsiz olduklarinda "yerel" yazar.
+ * Eski bir deploy'un logu ile yenisini karistirmayi imkansiz kilar.
+ */
+function buildInfo() {
+    const commit = process.env.RENDER_GIT_COMMIT;
+    const branch = process.env.RENDER_GIT_BRANCH;
+    if (!commit) return 'yerel calisma (commit bilgisi yok)';
+    return `commit ${commit.slice(0, 7)}${branch ? ` (${branch})` : ''}`;
+}
+
 server.listen(PORT, '0.0.0.0', () => {
-    info(`wboot-relay dinliyor: 0.0.0.0:${PORT}`);
+    info(`wboot-relay v${require('./package.json').version} basladi - ${buildInfo()}`);
+    info(`Dinleniyor: 0.0.0.0:${PORT}`);
     info(`Node ${process.version}, pid ${process.pid}`);
     info(`Sinirlar: maxPayload=${MAX_PAYLOAD_BYTES}B soket=${MAX_SOCKETS} cihaz=${MAX_DEVICES} ip=${MAX_SOCKETS_PER_IP}`);
     info(`Heartbeat: ${HEARTBEAT_INTERVAL_MS / 1000}s araliginda, ${HEARTBEAT_MAX_MISSED} cevapsiz ping sonrasi kopar`);
