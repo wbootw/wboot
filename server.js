@@ -666,8 +666,29 @@ sweepTimer.unref();
 
 // --- Baslatma ve duzgun kapanma --------------------------------------------
 
+/**
+ * Sessiz olumu onler. Yakalanmamis bir istisna ya da reddedilen promise,
+ * hicbir iz birakmadan sureci dusurur - platform loglarinda yalnizca yeniden
+ * baslatma gorunur. Once sebebi yaziyor, sonra cikiyoruz.
+ */
+process.on('uncaughtException', (err) => {
+    log('fatal', `YAKALANMAMIS ISTISNA: ${err && err.stack ? err.stack : err}`);
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (reason) => {
+    log('fatal', `ISLENMEMIS PROMISE REDDI: ${reason && reason.stack ? reason.stack : reason}`);
+    process.exit(1);
+});
+
+server.on('error', (err) => {
+    log('fatal', `HTTP SUNUCU HATASI: ${err && err.stack ? err.stack : err}`);
+    process.exit(1);
+});
+
 server.listen(PORT, '0.0.0.0', () => {
-    info(`wboot-relay dinliyor: port ${PORT}`);
+    info(`wboot-relay dinliyor: 0.0.0.0:${PORT}`);
+    info(`Node ${process.version}, pid ${process.pid}`);
     info(`Sinirlar: maxPayload=${MAX_PAYLOAD_BYTES}B soket=${MAX_SOCKETS} cihaz=${MAX_DEVICES} ip=${MAX_SOCKETS_PER_IP}`);
     info(`Heartbeat: ${HEARTBEAT_INTERVAL_MS / 1000}s araliginda, ${HEARTBEAT_MAX_MISSED} cevapsiz ping sonrasi kopar`);
     if (!DEVICE_TOKEN) warn('RELAY_DEVICE_TOKEN tanimli DEGIL - cihaz tarafi kimlik dogrulamasi KAPALI');
