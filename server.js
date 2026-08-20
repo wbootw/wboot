@@ -721,11 +721,27 @@ function buildInfo() {
     return `commit ${commit.slice(0, 7)}${branch ? ` (${branch})` : ''}`;
 }
 
+/**
+ * Ters vekil arkasinda calisirken keep-alive yarisini onler.
+ *
+ * Node'un varsayilan keepAliveTimeout'u 5 saniyedir. Render/Cloudflare gibi
+ * bir vekil, bosta duran baglantiyi yeniden kullanmak uzereyken Node tam o
+ * anda kapatirsa vekil istemciye 502 doner - aralikli ve tekrari zor bir
+ * hata olarak gorunur. Cozum, uygulamanin zaman asimini vekilinkinden
+ * BUYUK tutmaktir (Render'in kendi dokumantasyonunun onerisi de budur).
+ *
+ * headersTimeout, keepAliveTimeout'tan buyuk olmalidir; aksi halde baglanti,
+ * istek basliklari okunmadan kapatilabilir.
+ */
+server.keepAliveTimeout = envInt('RELAY_KEEPALIVE_TIMEOUT_MS', 120 * 1000);
+server.headersTimeout = envInt('RELAY_HEADERS_TIMEOUT_MS', 125 * 1000);
+
 server.listen(PORT, '0.0.0.0', () => {
     info(`wboot-relay v${require('./package.json').version} basladi - ${buildInfo()}`);
     info(`Dinleniyor: 0.0.0.0:${PORT}`);
     info(`Node ${process.version}, pid ${process.pid}`);
     info(`Sinirlar: maxPayload=${MAX_PAYLOAD_BYTES}B soket=${MAX_SOCKETS} cihaz=${MAX_DEVICES} ip=${MAX_SOCKETS_PER_IP}`);
+    info(`Keep-alive: ${server.keepAliveTimeout / 1000}s (headers ${server.headersTimeout / 1000}s)`);
     info(`Heartbeat: ${HEARTBEAT_INTERVAL_MS / 1000}s araliginda, ${HEARTBEAT_MAX_MISSED} cevapsiz ping sonrasi kopar`);
     if (!DEVICE_TOKEN) warn('RELAY_DEVICE_TOKEN tanimli DEGIL - cihaz tarafi kimlik dogrulamasi KAPALI');
     if (!CLIENT_TOKEN) warn('RELAY_CLIENT_TOKEN tanimli DEGIL - client tarafi kimlik dogrulamasi KAPALI');
