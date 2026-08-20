@@ -666,7 +666,7 @@ sweepTimer.unref();
 
 // --- Baslatma ve duzgun kapanma --------------------------------------------
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     info(`wboot-relay dinliyor: port ${PORT}`);
     info(`Sinirlar: maxPayload=${MAX_PAYLOAD_BYTES}B soket=${MAX_SOCKETS} cihaz=${MAX_DEVICES} ip=${MAX_SOCKETS_PER_IP}`);
     info(`Heartbeat: ${HEARTBEAT_INTERVAL_MS / 1000}s araliginda, ${HEARTBEAT_MAX_MISSED} cevapsiz ping sonrasi kopar`);
