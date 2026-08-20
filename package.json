@@ -1,0 +1,16 @@
+{
+  "name": "wboot-relay",
+  "version": "1.0.0",
+  "description": "WebSocket tabanli cok-servisli relay (SSH/Telnet/VNC/RDP) - boot-level recovery erisimi icin",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/relay.test.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
