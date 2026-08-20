@@ -53,8 +53,26 @@ const WS_HIGH_WATER_MARK = 1024 * 1024;
 /** port -> aktif servis kanali (kontrol kanalinin ulasabilmesi icin) */
 const services = new Map();
 
+/**
+ * Zaman damgasi, saat dilimi offseti ile. Relay'in log bicimiyle ayni -
+ * cihaz ve relay loglarini yan yana koyup olaylari eslestirebilmek icin.
+ * TZ ortam degiskenine uyar; tanimsizsa sistem saati kullanilir.
+ */
+function timestamp() {
+    const d = new Date();
+    const pad = (n, w = 2) => String(n).padStart(w, '0');
+    const offsetMin = -d.getTimezoneOffset();
+    const abs = Math.abs(offsetMin);
+    const zone = offsetMin === 0
+        ? 'Z'
+        : `${offsetMin > 0 ? '+' : '-'}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+        `T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}` +
+        `.${pad(d.getMilliseconds(), 3)}${zone}`;
+}
+
 function log(msg) {
-    console.log(`[${new Date().toISOString()}] ${msg}`);
+    console.log(`[${timestamp()}] ${msg}`);
 }
 
 function relayUrl(pathSuffix) {
